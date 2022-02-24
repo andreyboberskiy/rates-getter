@@ -2,12 +2,23 @@ import axios from "axios";
 import fs from "fs";
 import "dotenv/config";
 
+const logInFile = (...texts) => {
+  const log = texts
+    .map((t) => `${new Date().toLocaleString("pt-Pt")} ${t}\n`)
+    .join("");
+
+  fs.appendFile("logs.txt", log, function (err) {
+    if (err) console.log(err);
+  });
+};
+
 const axiosInstance = axios.create({
   baseURL: "https://min-api.cryptocompare.com/data/",
 });
 
 axiosInstance.interceptors.request.use((config) => {
   console.log("Axios request");
+  logInFile("Axios request");
   return config;
 });
 
@@ -22,6 +33,7 @@ const crypto = [
   "LTC",
   "BCH",
   "ALGO",
+  "TRX",
 ];
 
 const fiat = ["EUR", "USD", "GBP"];
@@ -49,6 +61,7 @@ const getAllRates = async () => {
     return allRates;
   } else {
     console.log("All rates request failed", currenciesRates);
+    logInFile("All rates request failed", currenciesRates);
   }
 };
 
@@ -67,6 +80,7 @@ const getHistoryRates = async () => {
       historyRates[direction] = data.Data.map((i) => i.close);
     } else {
       console.log("Cant get history response by this direction: ", direction);
+      logInFile("Cant get history response by this direction: ", direction);
     }
   }
 
@@ -79,10 +93,15 @@ async function main() {
 
   const dataIntoFile = JSON.stringify({ allRates, historyRates }, null, "\t");
 
-  fs.writeFile(process.env.PATH_TO_RATES_FILE, dataIntoFile, function (err) {
-    if (err) return console.log(err);
-    console.log("Rates updated");
-  });
+  fs.writeFile(
+    process.env.PATH_TO_RATES_FILE || "/var/www/nebeus.com/html/rates.json",
+    dataIntoFile,
+    function (err) {
+      if (err) return logInFile(err);
+      logInFile("Rates updated");
+      console.log("Rates updated");
+    }
+  );
 }
 
 main();
