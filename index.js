@@ -2,6 +2,8 @@ import axios from "axios";
 import fs from "fs";
 import "dotenv/config";
 
+const isDev = process.env.DEV === "true";
+
 const logInFile = (...texts) => {
   const log = texts
     .map((t) => `${new Date().toLocaleString("pt-Pt")} ${t}\n`)
@@ -14,6 +16,12 @@ const logInFile = (...texts) => {
 
 const axiosInstance = axios.create({
   baseURL: "https://min-api.cryptocompare.com/data/",
+  headers: isDev
+    ? undefined
+    : {
+        authorization:
+          "Apikey aa24bafd50249685fa0510adb699ed90e63d85047d37395afc6e498f1714fd59",
+      },
 });
 
 axiosInstance.interceptors.request.use((config) => {
@@ -101,7 +109,9 @@ async function main() {
       process.env.PATH_TO_RATES_FILE || "/var/www/nebeus.com/html/rates.json",
       dataIntoFile,
       function (err) {
-        if (err) return logInFile(err);
+        if (err) {
+          return logInFile(JSON.stringify(err));
+        }
         logInFile("Rates updated");
         console.log("Rates updated");
       }
