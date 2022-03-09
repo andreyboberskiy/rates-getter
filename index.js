@@ -87,21 +87,29 @@ const getHistoryRates = async () => {
   return historyRates;
 };
 
+const checkValid = (data) =>
+  typeof data === "object" && Object.keys(data)?.length > 0;
+
 async function main() {
   const allRates = await getAllRates();
   const historyRates = await getHistoryRates();
 
-  const dataIntoFile = JSON.stringify({ allRates, historyRates }, null, "\t");
+  if (checkValid(allRates) && checkValid(historyRates)) {
+    const dataIntoFile = JSON.stringify({ allRates, historyRates }, null, "\t");
 
-  fs.writeFile(
-    process.env.PATH_TO_RATES_FILE || "/var/www/nebeus.com/html/rates.json",
-    dataIntoFile,
-    function (err) {
-      if (err) return logInFile(err);
-      logInFile("Rates updated");
-      console.log("Rates updated");
-    }
-  );
+    fs.writeFile(
+      process.env.PATH_TO_RATES_FILE || "/var/www/nebeus.com/html/rates.json",
+      dataIntoFile,
+      function (err) {
+        if (err) return logInFile(err);
+        logInFile("Rates updated");
+        console.log("Rates updated");
+      }
+    );
+  } else {
+    logInFile("Rates not written in file, data is invalid");
+    console.log("Rates not written in file, data is invalid");
+  }
 }
 
 main();
